@@ -1,27 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const GEMINI_KEY = 'AIzaSyAdri15krYFRiPI_wwuvS2VN6Sq6dM0kLs';
+const GROQ_KEY = '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';
 
 export async function POST(req: NextRequest) {
   try {
     const { prompt } = await req.json();
-    const res = await fetch(
-     `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${GEMINI_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }]
-        })
-      }
-    );
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 1024,
+      }),
+    });
     const data = await res.json();
-    console.log('Gemini response:', JSON.stringify(data).substring(0, 200));
-    const result = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const result = data?.choices?.[0]?.message?.content;
     if (result) {
       return NextResponse.json({ result });
     }
-    return NextResponse.json({ result: data?.error?.message || 'لا يوجد رد من Gemini' });
+    return NextResponse.json({ result: data?.error?.message || 'لا يوجد رد' });
   } catch (e) {
     console.error('Error:', e);
     return NextResponse.json({ result: 'خطأ في الاتصال' });
